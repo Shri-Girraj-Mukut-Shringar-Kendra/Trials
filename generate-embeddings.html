@@ -10,7 +10,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'DM Sans', sans-serif
+      font-family: sans-serif
     }
 
     body {
@@ -29,7 +29,7 @@
     p {
       font-size: 14px;
       color: #7a7670;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       line-height: 1.6
     }
 
@@ -60,7 +60,7 @@
       height: 340px;
       overflow-y: auto;
       white-space: pre-wrap;
-      line-height: 1.6
+      line-height: 1.8
     }
 
     .ok {
@@ -69,6 +69,10 @@
 
     .err {
       color: #c62828
+    }
+
+    .info {
+      color: #1565c0
     }
 
     #bar-wrap {
@@ -92,14 +96,12 @@
 <body>
   <h1>🧠 Generate Image Embeddings</h1>
   <p>
-    This page builds a <code>embeddings.json</code> file used for "Search by Photo".<br /><br />
-    Click <b>Start</b> — it will load the AI model, read your <code>images.json</code>,
-    analyze every product photo, then let you download <code>embeddings.json</code>.<br /><br />
-    <b>Upload that file to your my-catalogue GitHub repo.</b><br />
-    Re-run whenever you add many new images. Takes ~2–4 minutes for 60 images.
+    This builds <code>embeddings.json</code> for "Search by Photo".<br />
+    Click <b>Start</b> — the AI model will load, then process all your product images.<br />
+    When done, click <b>Download</b> and upload <code>embeddings.json</code> to your <b>my-catalogue</b> GitHub repo.
   </p>
-  <button id="start">▶ Start</button>
-  <button id="download" style="display:none;background:#2e7d32">⬇ Download embeddings.json</button>
+  <button id="startBtn">▶ Start</button>
+  <button id="dlBtn" style="display:none;background:#2e7d32">⬇ Download embeddings.json</button>
   <div id="bar-wrap">
     <div id="bar"></div>
   </div>
@@ -108,110 +110,145 @@
   <script>
     const logEl = document.getElementById('log');
     const bar = document.getElementById('bar');
-    const startBtn = document.getElementById('start');
-    const downloadBtn = document.getElementById('download');
+    const startBtn = document.getElementById('startBtn');
+    const dlBtn = document.getElementById('dlBtn');
     let resultJSON = null;
 
     function log(msg, cls) {
-      const line = document.createElement('div');
-      if (cls) line.className = cls;
-      line.textContent = msg;
-      logEl.appendChild(line);
+      const d = document.createElement('div');
+      if (cls) d.className = cls;
+      d.textContent = msg;
+      logEl.appendChild(d);
       logEl.scrollTop = logEl.scrollHeight;
     }
 
     function loadScript(src) {
-      return new Promise((resolve, reject) => {
+      return new Promise((res, rej) => {
+        if (document.querySelector(`script[src="${src}"]`)) return res();
         const s = document.createElement('script');
-        s.src = src;
-        s.onload = resolve;
-        s.onerror = () => reject(new Error('Failed to load: ' + src));
+        s.src = src; s.onload = res; s.onerror = () => rej(new Error('Failed: ' + src));
         document.head.appendChild(s);
       });
     }
 
-    function loadImage(url) {
+    // Load image via canvas using a CORS proxy
+    function loadImageViaProxy(url) {
       return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error('Image load failed'));
-        // Add cache buster to avoid CORS cached responses
-        img.src = url + (url.includes('?') ? '&' : '?') + 'cb=' + Date.now();
+        // Try multiple proxy approaches
+        const proxies = [
+          `https://corsproxy.io/?${encodeURIComponent(url)}`,
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        ];
+
+        let tried = 0;
+        function tryNext() {
+          if (tried >= proxies.length) {
+            reject(new Error('All proxies failed'));
+            return;
+          }
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          const proxyUrl = proxies[tried++];
+          img.onload = () => resolve(img);
+          img.onerror = () => tryNext();
+          img.src = proxyUrl;
+        }
+        tryNext();
       });
     }
 
-    function cosineSim(a, b) {
-      let dot = 0, na = 0, nb = 0;
-      for (let i = 0; i < a.length; i++) { dot += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; }
-      return dot / (Math.sqrt(na) * Math.sqrt(nb));
+    // Alternative: draw image to canvas via fetch+blob
+    async function loadImageViaFetch(url) {
+      const proxies = [
+        `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      ];
+
+      for (const proxy of proxies) {
+        try {
+          const res = await fetch(proxy);
+          if (!res.ok) continue;
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const img = await new Promise((resolve, reject) => {
+            const i = new Image();
+            i.onload = () => { URL.revokeObjectURL(blobUrl); resolve(i); };
+            i.onerror = reject;
+            i.src = blobUrl;
+          });
+          return img;
+        } catch (e) { continue; }
+      }
+      throw new Error('Image load failed via all proxies');
     }
 
     startBtn.onclick = async () => {
       startBtn.disabled = true;
       logEl.innerHTML = '';
       bar.style.width = '0%';
+
       try {
-        log('Loading TensorFlow.js…');
+        log('Loading TensorFlow.js…', 'info');
         await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js');
-        log('TensorFlow.js loaded ✅', 'ok');
+        log('✓ TensorFlow.js ready', 'ok');
 
-        log('Loading MobileNet model…');
+        log('Loading MobileNet…', 'info');
         await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js');
-        log('MobileNet loaded ✅', 'ok');
+        log('✓ MobileNet script loaded', 'ok');
 
-        log('Initializing model weights (may take 30s)…');
+        log('Initializing model weights (30–60s first time)…', 'info');
         const model = await mobilenet.load({ version: 2, alpha: 1.0 });
-        log('Model ready ✅', 'ok');
+        log('✓ Model ready!', 'ok');
 
-        log('Fetching images.json from my-catalogue…');
-        const res = await fetch('https://shri-girraj-mukut-shringar-kendra.github.io/my-catalogue/images.json?t=' + Date.now());
-        if (!res.ok) throw new Error('Could not fetch images.json — status ' + res.status);
-        const data = await res.json();
+        log('Fetching images.json…', 'info');
+        const r = await fetch('https://shri-girraj-mukut-shringar-kendra.github.io/my-catalogue/images.json?t=' + Date.now());
+        if (!r.ok) throw new Error('Cannot fetch images.json — ' + r.status);
+        const data = await r.json();
 
-        // Flatten all images across categories
         const allImages = [];
         data.forEach(cat => (cat.images || []).forEach(img => allImages.push(img)));
-        log(`Found ${allImages.length} images across ${data.length} categories.`);
+        log(`Found ${allImages.length} images in ${data.length} categories`, 'ok');
+        log('Processing images via proxy (this takes a few minutes)…', 'info');
 
         const embeddings = [];
-        let done = 0;
+        let done = 0, skipped = 0;
 
         for (const item of allImages) {
           try {
-            const img = await loadImage(item.url);
-            const tensor = tf.tidy(() =>
-              tf.browser.fromPixels(img)
+            const img = await loadImageViaFetch(item.url);
+            const embedding = tf.tidy(() => {
+              const tensor = tf.browser.fromPixels(img)
                 .resizeBilinear([224, 224])
                 .toFloat()
                 .div(255.0)
-                .expandDims(0)
-            );
-            const embTensor = model.infer(tensor, true);
-            const vec = Array.from(await embTensor.data());
-            tensor.dispose();
-            embTensor.dispose();
+                .expandDims(0);
+              return model.infer(tensor, true);
+            });
+            const vec = Array.from(await embedding.data());
+            embedding.dispose();
             embeddings.push({ id: item.id, name: item.name, embedding: vec });
             log(`✓ ${item.name}`, 'ok');
           } catch (e) {
             log(`✗ Skipped "${item.name}" — ${e.message}`, 'err');
+            skipped++;
           }
           done++;
           bar.style.width = Math.round((done / allImages.length) * 100) + '%';
-          await new Promise(r => setTimeout(r, 20));
+          await new Promise(r => setTimeout(r, 30));
         }
 
         resultJSON = JSON.stringify(embeddings);
-        log(`\n✅ Done! ${embeddings.length}/${allImages.length} images processed.`, 'ok');
-        log('Click "Download embeddings.json" and upload it to your my-catalogue GitHub repo.', 'ok');
-        downloadBtn.style.display = 'inline-block';
+        log(`\n✅ Done! ${embeddings.length} processed, ${skipped} skipped.`, 'ok');
+        log('Click Download and upload embeddings.json to your my-catalogue GitHub repo!', 'ok');
+        dlBtn.style.display = 'inline-block';
+
       } catch (err) {
         log('ERROR: ' + err.message, 'err');
         startBtn.disabled = false;
       }
     };
 
-    downloadBtn.onclick = () => {
+    dlBtn.onclick = () => {
       const blob = new Blob([resultJSON], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
