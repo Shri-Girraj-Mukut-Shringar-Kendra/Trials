@@ -211,7 +211,15 @@
   },
   {
     "category": "Other Items",
-    "images": []
+    "images": [
+      {
+        "id": "1u2CWNf1vmKThDHUtN-HanGfkWkTAYZFp",
+        "designNo": "DN-131",
+        "name": "New jhula.jpg",
+        "url": "https://drive.google.com/thumbnail?id=1u2CWNf1vmKThDHUtN-HanGfkWkTAYZFp&sz=w800",
+        "date": "2026-07-09T04:46:22.439Z"
+      }
+    ]
   },
   {
     "category": "Baal",
