@@ -1,5 +1,78 @@
 [
   {
+    "category": "Mala",
+    "images": [
+      {
+        "id": "1fpSv-GjKZ90RYB4FD8b-jmsZOCGXaNrK",
+        "designNo": "DN-043",
+        "name": "Mala_1",
+        "url": "https://drive.google.com/thumbnail?id=1fpSv-GjKZ90RYB4FD8b-jmsZOCGXaNrK&sz=w800",
+        "date": "2026-07-10T08:38:21.056Z"
+      },
+      {
+        "id": "1cRF9hH2_1BI9t-0AIhTUj9I2iS1UkrK9",
+        "designNo": "DN-044",
+        "name": "Mala_2",
+        "url": "https://drive.google.com/thumbnail?id=1cRF9hH2_1BI9t-0AIhTUj9I2iS1UkrK9&sz=w800",
+        "date": "2026-07-10T08:38:20.935Z"
+      },
+      {
+        "id": "1P9VCIbPMl9LDibK3swST8UMG1j9NVhxT",
+        "designNo": "DN-045",
+        "name": "Mala_3",
+        "url": "https://drive.google.com/thumbnail?id=1P9VCIbPMl9LDibK3swST8UMG1j9NVhxT&sz=w800",
+        "date": "2026-07-10T08:38:20.854Z"
+      },
+      {
+        "id": "1GjnA2F6fFOptHavek2w2RXdNObOB4Y0D",
+        "designNo": "DN-046",
+        "name": "Mala_4",
+        "url": "https://drive.google.com/thumbnail?id=1GjnA2F6fFOptHavek2w2RXdNObOB4Y0D&sz=w800",
+        "date": "2026-07-10T08:38:20.713Z"
+      },
+      {
+        "id": "12awpzAhDeY_fvo2YksoSSOmQoWfx3Ypg",
+        "designNo": "DN-047",
+        "name": "Mala_5",
+        "url": "https://drive.google.com/thumbnail?id=12awpzAhDeY_fvo2YksoSSOmQoWfx3Ypg&sz=w800",
+        "date": "2026-07-10T08:38:20.611Z"
+      }
+    ]
+  },
+  {
+    "category": "Mukut set",
+    "images": [
+      {
+        "id": "1phPXsxyujAMGinzQX9hgEj8bTBcHGRBv",
+        "designNo": "DN-048",
+        "name": "Mukut set_1",
+        "url": "https://drive.google.com/thumbnail?id=1phPXsxyujAMGinzQX9hgEj8bTBcHGRBv&sz=w800",
+        "date": "2026-07-10T08:38:00.036Z"
+      },
+      {
+        "id": "1n_M5M1A11Yox2nhUDgmCvLemQCjkZWsu",
+        "designNo": "DN-049",
+        "name": "Mukut set_2",
+        "url": "https://drive.google.com/thumbnail?id=1n_M5M1A11Yox2nhUDgmCvLemQCjkZWsu&sz=w800",
+        "date": "2026-07-10T08:37:59.920Z"
+      },
+      {
+        "id": "1lnkopmZBi1yFy0LaoC8zYPf3LnA6pja8",
+        "designNo": "DN-050",
+        "name": "Mukut set_3",
+        "url": "https://drive.google.com/thumbnail?id=1lnkopmZBi1yFy0LaoC8zYPf3LnA6pja8&sz=w800",
+        "date": "2026-07-10T08:37:59.712Z"
+      },
+      {
+        "id": "1C0CToNlKtfEVKMUDUGXcd6yXxJofYdks",
+        "designNo": "DN-051",
+        "name": "Mukut set_4",
+        "url": "https://drive.google.com/thumbnail?id=1C0CToNlKtfEVKMUDUGXcd6yXxJofYdks&sz=w800",
+        "date": "2026-07-10T08:37:59.550Z"
+      }
+    ]
+  },
+  {
     "category": "Matki",
     "images": [
       {
